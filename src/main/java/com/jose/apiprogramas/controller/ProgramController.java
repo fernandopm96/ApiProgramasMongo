@@ -1,10 +1,15 @@
 package com.jose.apiprogramas.controller;
 import com.jose.apiprogramas.entities.Program;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.*;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.*;
+
+import static com.mongodb.client.model.Aggregates.sort;
 
 @RestController
 public class ProgramController {
@@ -31,16 +36,76 @@ public class ProgramController {
 
     @PostMapping("/program")
     public String insertProgram(@RequestBody Program program){
-        programCollection.insertOne(program);
-        return "ok";
+    /*    programCollection.createIndex(Indexes.ascending("name"));
+        if(programCollection.find(Filters.eq("name", program.name)).first() == null){
+            return "ok";
+        } else {
+            return "El nombre de programa ya existe";
+        }*/
+            programCollection.insertOne(program);
+            return "ok";
     }
 
-    @DeleteMapping("/program/{name}")
-    public String deleteProgram(@PathVariable String name){
-        Bson filter = Filters.eq("name",name);
-        programCollection.findOneAndDelete(filter);
-        return "deleted";
+
+
+        //Bson query = Filters.and(Filters.gte("price", 20), Filters.lte("price", 15000));
+    @GetMapping("/program/test")
+    public List<Program> testProgram(){
+
+        return programCollection.find().sort(Filters.eq("price", 1))
+                .into(new ArrayList<Program>());
     }
+
+    @GetMapping("/program")
+    public List<Program> getPrograms(
+            @RequestParam(required = false) String orderField,
+            @RequestParam(required = false) Integer orderDirection,
+            @RequestParam(required = false) String matchingName,
+            @RequestParam(required = false) Integer matchingYear,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice
+            ){
+        List<Bson> filterChain = new ArrayList<>();
+        Bson sortFilter = Filters.eq("name", -1);
+        if(orderField != null && orderDirection != null){
+            sortFilter = Filters.eq(orderField, orderDirection);
+        }
+        if(matchingName != null){
+            filterChain.add(Filters.eq("name", matchingName));
+        }
+        if(minPrice != null){
+            filterChain.add(Filters.gte("price", minPrice));
+        }
+        if(maxPrice != null){
+            filterChain.add(Filters.lte("price", maxPrice));
+        }
+
+        if(matchingYear != null){
+            LocalDate dateMin = LocalDate.of(matchingYear, 1, 1);
+            LocalDate dateMax = LocalDate.of(matchingYear+1, 1, 1);
+            filterChain.add(Filters.and(Filters.gte("publicationDate", dateMin), Filters.lte("publicationDate", dateMax)));
+        }
+        if(filterChain.isEmpty()){
+            return programCollection.find().sort(sortFilter).into(new ArrayList<>());
+        }
+
+        return programCollection.find(Filters.and(filterChain)).sort(sortFilter).into(new ArrayList<>());
+    }
+
+    @PutMapping("/program")
+    public void updateProgram(@RequestParam String name, @RequestBody Program program){
+        Bson query = Filters.eq("name", name);
+        UpdateOptions updateOptions = new UpdateOptions().upsert(true);
+        programCollection.replaceOne(query, program, updateOptions);
+    }
+
+    @DeleteMapping("/program")
+    public void deleteProgram(@RequestParam String name){
+        Bson query = Filters.eq("name", name);
+        programCollection.deleteOne(query);
+    }
+
+
 
 
 }

@@ -5,6 +5,8 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -39,6 +41,10 @@ public class MongodbBeans {
                                                         .build()));
         MongoClient client = new MongoClient();
         MongoDatabase db = client.getDatabase("crysec").withCodecRegistry(pojoCodecRegistry);
-        return db.getCollection("programs",Program.class);
+        MongoCollection<Program> collection = db.getCollection("programs", Program.class);
+        collection.createIndex(Indexes.ascending("name"), new IndexOptions().unique(true));
+
+
+        return collection;
     }
 }

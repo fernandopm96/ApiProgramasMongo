@@ -9,6 +9,10 @@ public class Programmer {
     public Specialization specialization;
     public Level level;
 
+    public Programmer(){
+
+    }
+
     public Programmer(String name, Date birthDate, Specialization specialization, Level level) {
         this.name = name;
         this.birthDate = birthDate;
