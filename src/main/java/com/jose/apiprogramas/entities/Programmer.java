@@ -8,7 +8,6 @@ public class Programmer {
     public Date birthDate;
     public Specialization specialization;
     public Level level;
-
     public Programmer(){
 
     }

@@ -48,7 +48,6 @@ public class ProgramController {
         //Bson query = Filters.and(Filters.gte("price", 20), Filters.lte("price", 15000));
     @GetMapping("/program/test")
     public List<Program> testProgram(){
-
         return programCollection.find().sort(Filters.eq("price", 1))
                 .into(new ArrayList<Program>());
     }
@@ -91,9 +90,13 @@ public class ProgramController {
 
     @PutMapping("/program")
     public void updateProgram(@RequestParam String name, @RequestBody Program program){
+        try{
         Bson query = Filters.eq("name", name);
         UpdateOptions updateOptions = new UpdateOptions().upsert(true);
         programCollection.replaceOne(query, program, updateOptions);
+        }catch (MongoWriteException e){
+            throw new NameRepeatedException();
+        }
     }
 
     @DeleteMapping("/program")
