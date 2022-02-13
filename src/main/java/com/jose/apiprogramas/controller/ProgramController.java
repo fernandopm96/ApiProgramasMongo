@@ -1,5 +1,7 @@
 package com.jose.apiprogramas.controller;
 import com.jose.apiprogramas.entities.Program;
+import com.jose.apiprogramas.exceptions.NameRepeatedException;
+import com.mongodb.MongoWriteException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
 import org.bson.conversions.Bson;
@@ -35,18 +37,13 @@ public class ProgramController {
     }
 
     @PostMapping("/program")
-    public String insertProgram(@RequestBody Program program){
-    /*    programCollection.createIndex(Indexes.ascending("name"));
-        if(programCollection.find(Filters.eq("name", program.name)).first() == null){
-            return "ok";
-        } else {
-            return "El nombre de programa ya existe";
-        }*/
-            programCollection.insertOne(program);
-            return "ok";
+    public void insertProgram(@RequestBody Program program){
+            try{
+                programCollection.insertOne(program);
+            }catch (MongoWriteException e){
+                throw new NameRepeatedException();
+            }
     }
-
-
 
         //Bson query = Filters.and(Filters.gte("price", 20), Filters.lte("price", 15000));
     @GetMapping("/program/test")

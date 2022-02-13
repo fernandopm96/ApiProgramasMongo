@@ -1,7 +1,10 @@
 package com.jose.apiprogramas.configuration;
 
 import com.jose.apiprogramas.entities.Program;
-import com.mongodb.MongoClient;
+import com.mongodb.ConnectionString;
+
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -31,19 +34,28 @@ public class MongodbBeans {
         CodecRegistry pojoCodecRegistry =
                 CodecRegistries
                         .fromRegistries(
-                                MongoClient
-                                        .getDefaultCodecRegistry(), // Default codec
+                                MongoClientSettings.getDefaultCodecRegistry(),
+                                /*MongoClient
+                                        .getDefaultCodecRegistry(),*/ // Default codec
                                 CodecRegistries                     //customCodecProvider
                                         .fromProviders(
                                                 PojoCodecProvider
                                                         .builder()
                                                         .automatic(true)
                                                         .build()));
-        MongoClient client = new MongoClient();
+
+
+        ConnectionString connectionString = new ConnectionString("mongodb+srv://admin:admin@cluster0.f5kfb.mongodb.net/myFirstDatabase?retryWrites=true&w=majority");
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
+                .build();
+        MongoClient client = MongoClients.create(settings);
+        MongoDatabase database = client.getDatabase("crysec");
+
+        //MongoClient client = new MongoClient("mongodb+srv://admin:admin@cluster0.f5kfb.mongodb.net/myFirstDatabase?retryWrites=true&w=majority");
         MongoDatabase db = client.getDatabase("crysec").withCodecRegistry(pojoCodecRegistry);
         MongoCollection<Program> collection = db.getCollection("programs", Program.class);
         collection.createIndex(Indexes.ascending("name"), new IndexOptions().unique(true));
-
 
         return collection;
     }
